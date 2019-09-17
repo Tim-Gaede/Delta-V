@@ -1,5 +1,5 @@
 # Timothy Gaede
-# 2019-09-16
+# 2019-09-17
 # TimGaede@gmail.com
 
 using Formatting
@@ -116,31 +116,30 @@ function Δv(name, at_perihelion, alt_km, Isp, mᵢ_to_m, Δv_in_planet_directio
         throw(msg)
     end
 
+    # Initial radius of rocket orbit about planet
+    rᵢ_rk_◐ = R◐ + k*alt_km
 
+    # Initial speed of rocket while orbiting planet
+    vᵢ_rk_◐ = √(μ◐ / rᵢ_rk_◐)
 
-
-    rₒ_rk_◐ = R◐ + k*alt_km
-    vₒ_rk_◐ = √(μ◐ / rₒ_rk_◐) # speed of rocket wrt the planet while in orbit
-
-    Δv_rk_◐ = 9.80665*Isp*log(mᵢ_to_m) # change in speed of rocket
-
+    # change in speed of rocket
+    Δv_rk_◐ = 9.80665*Isp*log(mᵢ_to_m)
 
     # Speed of rocket immediately after the engines finished their burn
-    vₚ_rk_◐ = vₒ_rk_◐ + Δv_rk_◐
+    vₚ_rk_◐ = vᵢ_rk_◐ + Δv_rk_◐
 
-    # velocity ratio of the rocket to a
+    # Speed ratio of the rocket to a rocket in a
     # would-be circular orbit at the same distance from the Sun
-    n = vₚ_rk_◐ / vₒ_rk_◐
+    n = vₚ_rk_◐ / vᵢ_rk_◐
+
     n² = n^2
-
-
     if n² < 2 # Orbits the Planet
 
-
-        rₐ_rk_◐ = rₒ_rk_◐ * n² / (2 - n²) # apoapsis
-        a = (rₐ_rk_◐ + rₒ_rk_◐) / 2 # semi-major axis
+        rₐ_rk_◐ = rᵢ_rk_◐ * n² / (2 - n²) # apoapsis
+        a = (rₐ_rk_◐ + rᵢ_rk_◐) / 2 # semi-major axis
         T = τ*√(a^3 / μ◐) # orbital period
 
+        # Prepare formatting of output
         if T < 10hr
             strT = format((T / hr), precision=5) * " hours"
         elseif T < 72hr
@@ -152,8 +151,6 @@ function Δv(name, at_perihelion, alt_km, Isp, mᵢ_to_m, Δv_in_planet_directio
         end
 
         alt_ap_km = (rₐ_rk_◐ - R◐) / k # altitude at apoapsis in km
-
-
         if alt_ap_km < 1000
             strAlt = format(alt_ap_km, precision=2) * " km"
         elseif alt_ap_km < 10k
@@ -171,7 +168,7 @@ function Δv(name, at_perihelion, alt_km, Isp, mᵢ_to_m, Δv_in_planet_directio
 
     elseif n² > 2 # Rocket escapes the planet.  Will it escape the Solar System?
 
-        vₑ_rk_◐ = √2vₒ_rk_◐  # escape speed from LEO
+        vₑ_rk_◐ = √2vᵢ_rk_◐  # escape speed from LEO
 
 
         at_perihelion    ?    r◐ = a◐ * (1 - e◐)    :    r◐ = a◐ * (1 + e◐)
@@ -181,26 +178,25 @@ function Δv(name, at_perihelion, alt_km, Isp, mᵢ_to_m, Δv_in_planet_directio
         v_rk_◐ = √(vₚ_rk_◐^2 - vₑ_rk_◐^2) # wrt the planet
 
 
-
         if Δv_in_planet_direction
 
             vₚ_rk_☉ = v_◐_☉ + v_rk_◐ # wrt Sun
-            rₚ_rk_☉ = r◐ + rₒ_rk_◐ # perihelion of rocket wrt sun
+            rₚ_rk_☉ = r◐ + rᵢ_rk_◐ # perihelion of rocket wrt sun
 
             # speed of what would be a circular orbit
             # about the Sun at rocket's perihelion
             v○_rk_☉ = √(μ☉ / rₚ_rk_☉)
-            #
 
-            N = vₚ_rk_☉ / v○_rk_☉ # velocity ratio
+            # Ratio of actual speed to speed of circular orbit
+            N = vₚ_rk_☉ / v○_rk_☉
+
             N² = N^2
-
             if N² < 2 # Rocket orbits the Sun
                 if Δv_in_planet_direction
-                    rₚ_rk_☉ = r◐ + rₒ_rk_◐ # perihelion of rocket wrt sun
+                    rₚ_rk_☉ = r◐ + rᵢ_rk_◐ # perihelion of rocket wrt sun
                     rₐ_rk_☉ = rₚ_rk_☉ * N² / (2 - N²) # aphelion
                 else
-                    rₐ_rk_☉ = r◐ - rₒ_rk_◐ # aphelion of rocket wrt sun
+                    rₐ_rk_☉ = r◐ - rᵢ_rk_◐ # aphelion of rocket wrt sun
                     rₚ_rk_☉ = rₐ_rk_☉ * (2 - N²) / N² # perihelion
                 end
 
@@ -234,16 +230,16 @@ function Δv(name, at_perihelion, alt_km, Isp, mᵢ_to_m, Δv_in_planet_directio
                 return "Δv was too large.  Orbit is retrograde about the Sun\n"
             end
             vₐ_rk_☉ = v_◐_☉ - v_rk_◐
-            rₐ_rk_☉ = r◐ - rₒ_rk_◐ # aphelion of rocket wrt sun
+            rₐ_rk_☉ = r◐ - rᵢ_rk_◐ # aphelion of rocket wrt sun
 
             # speed of what would be a circular orbit
             # about the Sun at rocket's aphelion
             v○_rk_☉ = √(μ☉ / rₐ_rk_☉)
-            #
 
-            X = vₐ_rk_☉ / v○_rk_☉ # velocity ratio at aphelion
+            # speed ratio at aphelion
+            X = vₐ_rk_☉ / v○_rk_☉
+
             X² = X^2
-
             rₚ_rk_☉ = rₐ_rk_☉ * X² / (2 - X²) # perihelion
 
             SolarOrbitInfo(rₚ_rk_☉, rₐ_rk_☉)
@@ -263,8 +259,8 @@ function main()
     planet = "Earth"
     atPeri = true
     alt_km = 200
-    Isp = 380
-    mᵢ_to_m = 3.24
+    Isp = 1500
+    mᵢ_to_m = 2.85
     Δv_in_planet_direction = true
 
     println(Δv(planet, atPeri, alt_km, Isp, mᵢ_to_m, Δv_in_planet_direction))
